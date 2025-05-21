@@ -22,7 +22,8 @@ namespace Bildbearbeitungsprogramm
         public Form1()
         {
             InitializeComponent();
-            change_button.Text = "load picture";                 
+            change_button.Text = "load picture";
+            apply_button.Hide(); 
             
             trackBarBrightness.Hide();
             trackBarBrightness.Maximum = 100;
@@ -82,23 +83,25 @@ namespace Bildbearbeitungsprogramm
                 MessageBox.Show("Bitte erst ein Bild laden!");                  //Falls kein Bild vorhanden ist -> wird ein Error angezeigt
                 return;
             }
+            Bitmap graustufenBild = new Bitmap(originalPicture.Width, originalPicture.Height);
 
-            Bitmap grauBild = new Bitmap(originalPicture.Width, originalPicture.Height);
-           
-            for (int y = 0; y < originalPicture.Height; y++)
+            for (int x = 0; x < originalPicture.Width; x++)
             {
-                for (int x = 0; x < originalPicture.Width; x++)
+                for (int y = 0; y < originalPicture.Height; y++)
                 {
-                    Color pixel = originalPicture.GetPixel(x, y);
-                    int grau = (int)(0.3 * pixel.R + 0.59 * pixel.G + 0.11 * pixel.B);
+                    Color originalFarbe = originalPicture.GetPixel(x, y);
+                    int grau = (int)(0.3 * originalFarbe.R + 0.59 * originalFarbe.G + 0.11 * originalFarbe.B);
                     Color grauFarbe = Color.FromArgb(grau, grau, grau);
-                    grauBild.SetPixel(x, y, grauFarbe);
+                    graustufenBild.SetPixel(x, y, grauFarbe);
                 }
             }
 
-            pictureBox1.Image = grauBild;
-            originalPicture = grauBild;
+            pictureBox1.Image = graustufenBild;
+            originalPicture = graustufenBild;
+           
+            apply_button.Show();
         }
+        
         
         private void Reset_Click(object sender, EventArgs e)                    //Bild wird auf das originalBild durch eine neue Bitmap zurückgesetzt
         {
@@ -154,6 +157,8 @@ namespace Bildbearbeitungsprogramm
             }
             editedPicture = neu;
             pictureBox1.Image = editedPicture;
+            
+            apply_button.Show();
         }
 
         private void apply_button_Click(object sender, EventArgs e)             //speichert den Wert der Helligkeit auf das originalbild ab
@@ -165,6 +170,7 @@ namespace Bildbearbeitungsprogramm
             }
             originalPicture = editedPicture;
             trackBarBrightness.Hide();
+            apply_button.Hide();
         }
 
         private void panel1_Paint(object sender, PaintEventArgs e)
@@ -175,6 +181,38 @@ namespace Bildbearbeitungsprogramm
         private void pictureBox1_Click(object sender, EventArgs e)
         {
 
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void save_button_Click(object sender, EventArgs e)
+        {
+            editedPicture = new Bitmap (pictureBox1.Image);
+
+            // Speicherdialog öffnen
+            using (SaveFileDialog sfd = new SaveFileDialog())
+            {
+                sfd.Filter = "PNG-Bild|*.png|JPEG-Bild|*.jpg|Bitmap|*.bmp";
+                sfd.Title = "Bild speichern";
+                sfd.FileName = "edited_picture.png";
+
+                if (sfd.ShowDialog() == DialogResult.OK)
+                {
+                    // Bildformat bestimmen
+                    System.Drawing.Imaging.ImageFormat format = System.Drawing.Imaging.ImageFormat.Png;
+                    if (sfd.FilterIndex == 2)
+                        format = System.Drawing.Imaging.ImageFormat.Jpeg;
+                    else if (sfd.FilterIndex == 3)
+                        format = System.Drawing.Imaging.ImageFormat.Bmp;
+
+                    // Bild speichern
+                    editedPicture.Save(sfd.FileName, format);
+                    MessageBox.Show("Bild erfolgreich gespeichert!");
+                }
+            }
         }
     }
 }
